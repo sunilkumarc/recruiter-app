@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Recruiting Application</title>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.1.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Manage Recruiters/Candidates</h2>
+        <hr/>
+        <div class="page"></div>
+        <div class="summary"></div>
+    </div>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.2/jquery.min.js" type="text/javascript"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js" type="text/javascript"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.2/backbone-min.js"></script>
+
+    <script type="text/template" id="main-list-view">
+        <a href="#add-recruiters" class="btn btn-primary">Add Recruiters</a>
+        <a href="#add-candidates" class="btn btn-primary">Add Candidates</a>
+        <a href="#make-connection" class="btn btn-primary">Make Connection</a>
+        <hr/>
+    </script>
+
+    <script type="text/template" id="add-recruiter-view">
+        <h3>Add Recruiter</h3>
+        <hr/>
+        <form class="add-recruiter-form">
+            <label>Recruiter Name</label>
+            <input type="text" name="name" />
+
+            <label>Address</label>
+            <input type="text" name="address" />
+            <hr/>
+            <button type="submit" class="btn btn-primary">Add</button>
+            <button class="btn btn-primary cancel-recruiter">Back</button>
+        </form>
+    </script>
+
+    <script type="text/template" id="add-candidate-view">
+        <h3>Add Candidate</h3>
+        <hr/>
+        <form class="add-candidate-view">
+            <label>First Name</label>
+            <input type="text" name="first" />
+
+            <label>Last Name</label>
+            <input type="text" name="last" />
+
+            <hr/>
+            <button type="submit" class="btn btn-primary">Add</button>
+            <button class="btn btn-primary cancel-candidate">Back</button>
+        </form>
+    </script>
+
+    <script type="text/template" id="make-connection-table">
+        <table class="table striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Recruited By</th>
+              <th>Change Recruiter</th>
+              <th>Save</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% _.each(candidates, function(candidate) { %>
+              <tr>
+                <td><%= htmlEncode(candidate.get('first')) %> <%= htmlEncode(candidate.get('last')) %></td>
+                <td><%= candidate.get('assignedTo') ? htmlEncode(candidate.get('assignedToRecruiterName')) : "Nobody" %></td>
+                <td>
+                    <select id="<%= candidate.get('_id')%>">
+                        <option>Nobody</option>
+                        <% _.each(recruiters, function(recruiter) { %>
+                            <option value="<%= recruiter.get('_id')%>" ><%= recruiter.get('name')%></option>
+                        <% }); %>
+                    </select>
+                </td>
+                <td><a class="btn btn-primary edit-candidate" data-candidate="<%= candidate.get('_id')%>">Save</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+        <hr/>
+        <button class="btn btn-primary cancel-connection">Back</button>
+    </script>
+
+    <script type="text/template" id="summary-list-view">
+        <h3>Summary</h3>
+        <hr/>
+        <table class="table striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Recruited By</th>
+            </tr>
+          </thead>
+          <tbody>
+              <% _.each(candidates, function(candidate) { %>
+                <tr>
+                  <td><%= htmlEncode(candidate.get('first')) %> <%= htmlEncode(candidate.get('last')) %></td>
+                  <td><%= candidate.get('assignedTo') ? htmlEncode(candidate.get('assignedToRecruiterName')) : "Nobody" %></td>
+                </tr>
+              <% }); %>
+          </tbody>
+        </table>
+    </script>
+
+    <script>
+        $.ajaxPrefilter( function( options, originalOptions, jqXHR ) {
+            options.url = 'http://192.168.1.105:8000' + options.url;
+        });
+
+        function htmlEncode(value){
+          return $('<div/>').text(value).html();
+        }
+
+        $.fn.serializeObject = function() {
+          var o = {};
+          var a = this.serializeArray();
+          $.each(a, function() {
+              if (o[this.name] !== undefined) {
+                  if (!o[this.name].push) {
+                      o[this.name] = [o[this.name]];
+                  }
+                  o[this.name].push(this.value || '');
+              } else {
+                  o[this.name] = this.value || '';
+              }
+          });
+          return o;
+        };
+        // Different views
+        var MainListView = Backbone.View.extend({
+            el: '.page',
+
+            render: function(){
+                var template = _.template($('#main-list-view').html(), {});
+                this.$el.html(template);
+            }
+        });
+        var mainListView = new MainListView();
+
+        var Recruiter = Backbone.Model.extend({
+            urlRoot: '/addRecruiter'
+        });
+
+        // Add Recruiters view
+        var AddRecruiterView = Backbone.View.extend({
+            el: '.page',
+            events: {
+                'submit .add-recruiter-form': 'saveRecruiter',
+                'click .cancel-recruiter':'goBack'
+            },
+
+            saveRecruiter: function(ev){
+                var recruiterDetails = $(ev.currentTarget).serializeObject();
+                var recruiter = new Recruiter();
+                recruiter.save(recruiterDetails, {
+                    success: function(recruiterDetails){
+                        console.log('Success!!!');
+                        router.navigate('', {trigger: true});
+                    },
+
+                    error: function(){
+                        console.log('Error occured!');
+                    }
+                });
+                return false;
+            },
+
+            goBack: function(e){
+                e.preventDefault();
+                router.navigate('', {trigger: true});
+            },
+
+            render: function(){
+                var template = _.template($('#add-recruiter-view').html(), {});
+                this.$el.html(template);
+            }
+        });
+        var addRecruiterView = new AddRecruiterView();
+
+        var Candidate = Backbone.Model.extend({
+            defaults: {
+                assigned: 0,
+                assignedTo: null,
+                assignedToRecruiterName: ""
+            },
+
+            urlRoot: '/candidate'
+        });
+
+        var AddCandidateView = Backbone.View.extend({
+            el: '.page',
+
+            events: {
+                'submit .add-candidate-view': 'saveCandidate',
+                'click .cancel-candidate': 'goBack'
+            },
+
+            saveCandidate: function(ev) {
+                var candidateDetails = $(ev.currentTarget).serializeObject();
+                var candidate = new Candidate();
+                candidate.save(candidateDetails, {
+                    success: function(candidateDetails){
+                        console.log('Success!!!');
+                        router.navigate('', {trigger: true});
+                    }
+                });
+                return false;
+            },
+
+            goBack: function(e){
+                e.preventDefault();
+                router.navigate('', {trigger: true});
+            },
+
+            render: function(){
+                var template = _.template($('#add-candidate-view').html(), {});
+                this.$el.html(template);
+            }
+        });
+        var addCandidateView = new AddCandidateView();
+
+        var Candidates = Backbone.Collection.extend({
+            url: '/candidates'
+        });
+
+        var Recruiters = Backbone.Collection.extend({
+            url: '/recruiters'
+        });
+
+        var MakeConnectionView = Backbone.View.extend({
+            el: '.page',
+
+            events: {
+                'click .edit-candidate': 'editCandidate',
+                'click .cancel-connection': 'goBack'
+            },
+
+            goBack: function(e){
+                e.preventDefault();
+                router.navigate('', {trigger: true});
+            },
+
+            editCandidate: function(ev) {
+                var candidate_id = $(ev.currentTarget).data('candidate');
+                var recruiter_id = $("#" + candidate_id).val();
+                var recruiter_name = $("#" + candidate_id + " option:selected").text();
+                console.log(recruiter_name);
+
+                var candidate = new Candidate({id: candidate_id});
+                candidate.fetch({
+                    success: function(candidate) {
+                        console.log(candidate.get('first'));
+                        candidate.set('assigned', 1);
+                        candidate.set('assignedTo', recruiter_id);
+                        candidate.set('assignedToRecruiterName', recruiter_name);
+
+                        var updatedcandidate = new Candidate();
+                        updatedcandidate.save(candidate, {
+                            success: function(updatedCandidate) {
+                                router.navigate('/#make-connection', {trigger: true});
+                                // alert('Updated Successful!');
+                            }
+                        });
+                    }
+                });
+            },
+
+            render: function() {
+                var that = this;
+                var candidates = new Candidates();
+                var recruiters = new Recruiters();
+
+                candidates.fetch({
+                    success: function(candidates) {
+                        recruiters.fetch({
+                            success: function(recruiters) {
+                                var template = _.template($('#make-connection-table').html(), {candidates: candidates.models, recruiters: recruiters.models});
+                                that.$el.html(template);
+                            },
+
+                            error: function(err) {
+                                that.$el.html('There was some error in loading data');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        var makeConnectionView = new MakeConnectionView();
+
+        var SummaryListView = Backbone.View.extend({
+            el: '.summary',
+
+            render: function() {
+                var that = this;
+                var candidates = new Candidates();
+                candidates.fetch({
+                    success: function(candidates) {
+                        var template = _.template($('#summary-list-view').html(), {candidates: candidates.models});
+                        that.$el.html(template);
+                    }
+                });
+            },
+
+            clear: function() {
+                this.$el.html('');
+            }
+        });
+        var summaryListView = new SummaryListView();
+
+        // Router Configuration
+        var Router = Backbone.Router.extend({
+            routes: {
+                "": "home",
+                "add-recruiters": "recruiters",
+                "add-candidates": "candidates",
+                "make-connection": "connect"
+            }
+        });
+        var router = new Router;
+        router.on('route:home', function() {
+            mainListView.render();
+            summaryListView.render();
+        });
+        router.on('route:recruiters', function(){
+            addRecruiterView.render();
+            summaryListView.clear();
+        });
+        router.on('route:candidates', function(){
+            addCandidateView.render();
+            summaryListView.clear();
+        });
+        router.on('route:connect', function(){
+            makeConnectionView.render();
+            summaryListView.clear();
+        });
+        Backbone.history.start();
+    </script>
+
+</body>
+</html>
