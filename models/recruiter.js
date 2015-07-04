@@ -3,7 +3,9 @@ var mongoose = require('mongoose');
  var objId = Schema.ObjectId;
 
  var recruiterSchema = new Schema({
-     name: String
+     name: String,
+     employees_count: Number,
+     address: String
  });
 
 module.exports = mongoose.model('recruiter', recruiterSchema);

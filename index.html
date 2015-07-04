@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Recruiting Application</title>
+    <title>Recruiter Application</title>
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.1.1/css/bootstrap.min.css">
 </head>
 <body>
+
+    <!-- Container where the different pages will be loaded -->
     <div class="container">
         <h2>Manage Recruiters/Candidates</h2>
         <hr/>
@@ -17,13 +19,16 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js" type="text/javascript"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.2/backbone-min.js"></script>
 
+
+    <!-- Main List View which contains three links -->
     <script type="text/template" id="main-list-view">
-        <a href="#add-recruiters" class="btn btn-primary">Add Recruiters</a>
         <a href="#add-candidates" class="btn btn-primary">Add Candidates</a>
+        <a href="#add-recruiters" class="btn btn-primary">Add Recruiters</a>
         <a href="#make-connection" class="btn btn-primary">Make Connection</a>
         <hr/>
     </script>
 
+    <!-- View to add a new recruiter -->
     <script type="text/template" id="add-recruiter-view">
         <h3>Add Recruiter</h3>
         <hr/>
@@ -33,12 +38,16 @@
 
             <label>Address</label>
             <input type="text" name="address" />
+
+            <label>Number of Employees</label>
+            <input type="text" name="employeesNo" />
             <hr/>
             <button type="submit" class="btn btn-primary">Add</button>
             <button class="btn btn-primary cancel-recruiter">Back</button>
         </form>
     </script>
 
+    <!-- View to add a new candidate -->
     <script type="text/template" id="add-candidate-view">
         <h3>Add Candidate</h3>
         <hr/>
@@ -49,12 +58,16 @@
             <label>Last Name</label>
             <input type="text" name="last" />
 
+            <label>Email</label>
+            <input type="text" name="email" />
+
             <hr/>
             <button type="submit" class="btn btn-primary">Add</button>
             <button class="btn btn-primary cancel-candidate">Back</button>
         </form>
     </script>
 
+    <!-- View to assign a candidate to a recruiter -->
     <script type="text/template" id="make-connection-table">
         <table class="table striped">
           <thead>
@@ -87,6 +100,7 @@
         <button class="btn btn-primary cancel-connection">Back</button>
     </script>
 
+    <!-- Summary list view which display the candidate and his recruiter details -->
     <script type="text/template" id="summary-list-view">
         <h3>Summary</h3>
         <hr/>
@@ -110,7 +124,7 @@
 
     <script>
         $.ajaxPrefilter( function( options, originalOptions, jqXHR ) {
-            options.url = 'http://192.168.1.105:8000' + options.url;
+            options.url = 'http://192.168.1.104:3000' + options.url;
         });
 
         function htmlEncode(value){
@@ -132,7 +146,38 @@
           });
           return o;
         };
-        // Different views
+
+
+        /////////////// Models /////////////////////////
+
+        var Recruiter = Backbone.Model.extend({
+            urlRoot: '/addRecruiter'
+        });
+
+        var Candidate = Backbone.Model.extend({
+            defaults: {
+                assigned: 0,
+                assignedTo: null,
+                assignedToRecruiterName: ""
+            },
+
+            urlRoot: '/candidate'
+        });
+
+
+        ////////////// Collections //////////////////////
+
+        var Candidates = Backbone.Collection.extend({
+            url: '/candidates'
+        });
+
+        var Recruiters = Backbone.Collection.extend({
+            url: '/recruiters'
+        });
+
+
+        ////////////// Views ////////////////////////////
+
         var MainListView = Backbone.View.extend({
             el: '.page',
 
@@ -143,11 +188,6 @@
         });
         var mainListView = new MainListView();
 
-        var Recruiter = Backbone.Model.extend({
-            urlRoot: '/addRecruiter'
-        });
-
-        // Add Recruiters view
         var AddRecruiterView = Backbone.View.extend({
             el: '.page',
             events: {
@@ -160,11 +200,11 @@
                 var recruiter = new Recruiter();
                 recruiter.save(recruiterDetails, {
                     success: function(recruiterDetails){
-                        console.log('Success!!!');
+                        alert('Recruiter Added Successfully');
                         router.navigate('', {trigger: true});
                     },
 
-                    error: function(){
+                    error: function(err){
                         console.log('Error occured!');
                     }
                 });
@@ -183,16 +223,6 @@
         });
         var addRecruiterView = new AddRecruiterView();
 
-        var Candidate = Backbone.Model.extend({
-            defaults: {
-                assigned: 0,
-                assignedTo: null,
-                assignedToRecruiterName: ""
-            },
-
-            urlRoot: '/candidate'
-        });
-
         var AddCandidateView = Backbone.View.extend({
             el: '.page',
 
@@ -206,8 +236,12 @@
                 var candidate = new Candidate();
                 candidate.save(candidateDetails, {
                     success: function(candidateDetails){
-                        console.log('Success!!!');
+                        alert('Candidate Added Successfully');
                         router.navigate('', {trigger: true});
+                    },
+
+                    error: function(err) {
+                        alert('Email already taken');
                     }
                 });
                 return false;
@@ -224,14 +258,6 @@
             }
         });
         var addCandidateView = new AddCandidateView();
-
-        var Candidates = Backbone.Collection.extend({
-            url: '/candidates'
-        });
-
-        var Recruiters = Backbone.Collection.extend({
-            url: '/recruiters'
-        });
 
         var MakeConnectionView = Backbone.View.extend({
             el: '.page',
@@ -264,7 +290,6 @@
                         updatedcandidate.save(candidate, {
                             success: function(updatedCandidate) {
                                 router.navigate('/#make-connection', {trigger: true});
-                                // alert('Updated Successful!');
                             }
                         });
                     }
@@ -314,7 +339,9 @@
         });
         var summaryListView = new SummaryListView();
 
-        // Router Configuration
+
+        /////////////// Router ///////////////////////////
+
         var Router = Backbone.Router.extend({
             routes: {
                 "": "home",

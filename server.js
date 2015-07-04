@@ -11,7 +11,7 @@ var server = express();
 server.use(bodyParser.json());
 server.use(cors());
 
-var db_url = 'mongodb://localhost:27017/company-app';
+var db_url = 'mongodb://localhost:27017/recruiter-app';
 
 mongoose.connect(db_url, function(err, conn) {
     if(err) {
@@ -21,7 +21,9 @@ mongoose.connect(db_url, function(err, conn) {
 
 server.post('/addRecruiter', bodyParser(), function(req, res){
     var recruiter = new Recruiter({
-        name: req.body.name
+        name: req.body.name,
+        employees_count: req.body.employeesNo,
+        address: req.body.address
     });
 
     recruiter.save(function(err){
@@ -36,14 +38,19 @@ server.post('/candidate', bodyParser(), function(req, res){
     var candidate = new Candidate({
         first: req.body.first,
         last: req.body.last,
+        email: req.body.email,
         assigned: req.body.assigned,
         assignedTo: req.body.assignedTo
     });
 
     candidate.save(function(err){
         if(!err) {
-            console.log('200 OK');
             res.send(candidate);
+        } else {
+            if(err.code = 11000)
+                res.status(500).send("Email already taken!");
+            else
+                res.status(500).send("Something bad happened!");
         }
     });
 });

@@ -7,7 +7,7 @@ var mongoose = require('mongoose');
      last: String,
      assigned: Number,
      assignedTo: objId,
-     assignedToRecruiterName: String 
+     assignedToRecruiterName: String
  });
 
 module.exports = mongoose.model('candidates', candidateSchema);
