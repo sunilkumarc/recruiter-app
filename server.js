@@ -11,6 +11,7 @@ var server = express();
 server.use(bodyParser.json());
 server.use(cors());
 
+// local mondodb database
 var db_url = 'mongodb://localhost:27017/recruiter-app';
 
 mongoose.connect(db_url, function(err, conn) {
@@ -19,6 +20,7 @@ mongoose.connect(db_url, function(err, conn) {
     }
 });
 
+// add a recruiter
 server.post('/addRecruiter', bodyParser(), function(req, res){
     var recruiter = new Recruiter({
         name: req.body.name,
@@ -34,6 +36,7 @@ server.post('/addRecruiter', bodyParser(), function(req, res){
     });
 });
 
+// add a candidate
 server.post('/candidate', bodyParser(), function(req, res){
     var candidate = new Candidate({
         first: req.body.first,
@@ -55,6 +58,7 @@ server.post('/candidate', bodyParser(), function(req, res){
     });
 });
 
+// get the candidate details with the speicified 'id'
 server.get('/candidate/:id', bodyParser(), function(req, res) {
     var candidate_id = req.params.id;
     console.log(candidate_id);
@@ -68,6 +72,7 @@ server.get('/candidate/:id', bodyParser(), function(req, res) {
     })
 });
 
+// get all the candidates present in the database
 server.get('/candidates', function(req, res) {
     Candidate.find().exec(function(err, candidates){
         if(candidates) {
@@ -78,6 +83,7 @@ server.get('/candidates', function(req, res) {
     });
 });
 
+// update a candidate
 server.put('/candidate/:id', bodyParser(), function(req, res) {
 
     var candidate = new Candidate({
@@ -100,6 +106,7 @@ server.put('/candidate/:id', bodyParser(), function(req, res) {
     });
 });
 
+// get all the recruiters present in the databae
 server.get('/recruiters', function(req, res) {
     Recruiter.find().exec(function(err, recruiters) {
         if(recruiters) {
@@ -111,8 +118,7 @@ server.get('/recruiters', function(req, res) {
 });
 
 server.get('/', function(req, res){
-    res.status(200).send("OK");
-    next();
+    res.status(200).send("Server Working Fine :D");
 });
 
 var port = Number(process.env.PORT || 3000)
