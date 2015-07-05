@@ -13,6 +13,7 @@
     "body-parser": "^1.13.1",
     "cors": "^2.7.1",
     "express": "^4.13.0",
+    "mongodb-uri": "^0.9.7",
     "mongoose": "^4.0.6"
   }
 }

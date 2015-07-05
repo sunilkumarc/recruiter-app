@@ -12,7 +12,10 @@ server.use(bodyParser.json());
 server.use(cors());
 
 // local mondodb database
-var db_url = 'mongodb://localhost:27017/recruiter-app';
+// var db_url = 'mongodb://localhost:27017/recruiter-app';
+
+// mongodb database hosted on MongoLab
+var db_url = 'mongodb://sunilkumarc:Hello!123@ds036638.mongolab.com:36638/recruiter-app'
 
 mongoose.connect(db_url, function(err, conn) {
     if(err) {
